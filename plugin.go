@@ -5,10 +5,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
 	"errors"
 	log "github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
+        "github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -106,6 +106,78 @@ func (p *Plugin) Exec() error {
 		"bucket":   p.Bucket,
 	}).Info("Attempting to upload")
 
+	// Add Creation of Bucket if needed
+
+	input := &s3.ListBucketsInput{
+	}
+	result, err := client.ListBuckets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				log.WithFields(log.Fields{
+					"err": aerr.Error(),
+				}).Error("ListBucket")
+				
+				//fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			//fmt.Println(err.Error())
+			log.WithFields(log.Fields{
+				"err": aerr.Error(),
+			}).Error("ListBucket")
+		}
+	}
+	log.WithFields(log.Fields{
+		"listBucket": result,
+	}).Info("ListBuckets")
+		
+	var isBucketExisting bool = false
+	
+	for _, bucket := range result.Buckets {
+		if ((aws.StringValue(bucket.Name) == p.Bucket) == true){
+			isBucketExisting = true
+		}
+	}
+	
+	log.WithFields(log.Fields{
+		"isBucketExisting": isBucketExisting,
+	}).Info("isBucketExisting")
+
+	if (isBucketExisting == false){
+		_, err = client.CreateBucket(&s3.CreateBucketInput{
+			Bucket: aws.String(p.Bucket),
+		})
+		if err != nil {
+			log.WithFields(log.Fields{
+				"BucketName": p.Bucket,
+				"Err": err,
+			}).Error("Unable to create bucket")
+		}
+
+		// Wait until bucket is created before finishing
+		log.WithFields(log.Fields{
+			"BucketName": p.Bucket,
+		}).Info("Waiting for bucket to be created...\n")
+		
+		err = client.WaitUntilBucketExists(&s3.HeadBucketInput{
+			Bucket: aws.String(p.Bucket),
+		})
+		if err != nil {
+			log.WithFields(log.Fields{
+				"BucketName": p.Bucket,
+				"Err": err,
+			}).Error("Error occurred while waiting for bucket to be created")
+		}
+
+		log.WithFields(log.Fields{
+			"BucketName": p.Bucket,
+		}).Info("Bucket created\n")
+		
+	}
+	
 	matches, err := matches(p.Source, p.Exclude)
 	if err != nil {
 		log.WithFields(log.Fields{
