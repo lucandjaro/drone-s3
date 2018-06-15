@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-
 	"github.com/Sirupsen/logrus"
 	"github.com/joho/godotenv"
 	"github.com/urfave/cli"
@@ -92,7 +91,7 @@ func main() {
 			EnvVar: "DRONE_YAML_VERIFIED",
 		},
 		cli.BoolTFlag{
-			Name:   "CreateBucketifNecessary",
+			Name:   "create-bucket-if-necessary",
 			Usage:  "Create bucket if non existing yet",
 			EnvVar: "PLUGIN_CREATEBUCKET",
 		},
@@ -127,7 +126,7 @@ func run(c *cli.Context) error {
 		PathStyle:    c.Bool("path-style"),
 		DryRun:       c.Bool("dry-run"),
 		YamlVerified: c.BoolT("yaml-verified"),
-		CreateBucketIfNecessary: c.Bool("CreateBucketIfNecessary"),
+		CreateBucketIfNecessary: c.Bool("create-bucket-if-necessary"),
 	}
 
 	return plugin.Exec()

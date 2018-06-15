@@ -99,13 +99,6 @@ func (p *Plugin) Exec() error {
 	}
 	client := s3.New(session.New(), conf)
 
-	// find the bucket
-	log.WithFields(log.Fields{
-		"region":   p.Region,
-		"endpoint": p.Endpoint,
-		"bucket":   p.Bucket,
-	}).Info("Attempting to upload")
-
 	// Add Creation of Bucket if needed
 	if (p.CreateBucketIfNecessary == true){
 	
@@ -131,17 +124,18 @@ func (p *Plugin) Exec() error {
 				}).Error("ListBucket")
 			}
 		}
-		log.WithFields(log.Fields{
-			"listBucket": result,
-		}).Info("ListBuckets")
+
+		// log.WithFields(log.Fields{
+		// 	"listBucket": result,
+		// }).Info("ListBuckets")
 		
 		var isBucketExisting bool = false
 		
 		for _, bucket := range result.Buckets {
-			log.WithFields(log.Fields{
-				"BucketName": p.Bucket,
-				"BucketNamefromAWS": aws.StringValue(bucket.Name),
-			}).Info("AWS Check\n")
+			// log.WithFields(log.Fields{
+			// 	"BucketName": p.Bucket,
+			// 	"BucketNamefromAWS": aws.StringValue(bucket.Name),
+			// }).Info("AWS Check\n")
 			if ((aws.StringValue(bucket.Name) == p.Bucket) == true){
 				isBucketExisting = true
 			}
@@ -183,7 +177,15 @@ func (p *Plugin) Exec() error {
 			
 		}
 	}
-	// End of Creation of Bucket	
+	// End of Creation of Bucket
+
+	// find the bucket
+	log.WithFields(log.Fields{
+		"region":   p.Region,
+		"endpoint": p.Endpoint,
+		"bucket":   p.Bucket,
+	}).Info("Attempting to upload")
+	
 	matches, err := matches(p.Source, p.Exclude)
 	if err != nil {
 		log.WithFields(log.Fields{
