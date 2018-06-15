@@ -91,6 +91,11 @@ func main() {
 			Usage:  "Ensure the yaml was signed",
 			EnvVar: "DRONE_YAML_VERIFIED",
 		},
+		cli.BoolTFlag{
+			Name:   "CreateBucketifNecessary",
+			Usage:  "Create bucket if non existing yet",
+			EnvVar: "PLUGIN_CREATEBUCKET",
+		},
 		cli.StringFlag{
 			Name:  "env-file",
 			Usage: "source env file",
@@ -122,6 +127,7 @@ func run(c *cli.Context) error {
 		PathStyle:    c.Bool("path-style"),
 		DryRun:       c.Bool("dry-run"),
 		YamlVerified: c.BoolT("yaml-verified"),
+		CreateBucketIfNecessary: c.Bool("CreateBucketIfNecessary"),
 	}
 
 	return plugin.Exec()
