@@ -88,7 +88,7 @@ func (p *Plugin) Exec() error {
 		toAppend := []string{"", ""}
 		toAppend[0] = p.Bucket
 		if (p.GitFlowReady == true){
-			toAppend[1] = strings.SplitAfter("feature/", p.CommitBranch)[0]
+			toAppend[1] = strings.ToLower(strings.TrimPrefix(p.CommitBranch, "feature/"))
 		} else{
 			toAppend[1] = p.CommitBranch
 		}
