@@ -23,7 +23,7 @@ go test
 Build the Docker image with the following commands:
 
 ```
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -tags netgo
+(deprecated) CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -tags netgo
 docker build --rm=true -t plugins/s3 .
 ```
 
