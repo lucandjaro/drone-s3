@@ -9,7 +9,6 @@ RUN go get github.com/joho/godotenv
 RUN go get github.com/mattn/go-zglob
 RUN go get github.com/urfave/cli
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -tags netgo
-RUN ls
 
 
 
