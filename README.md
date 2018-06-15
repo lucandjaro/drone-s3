@@ -44,6 +44,7 @@ docker run --rm \
   -e PLUGIN_SOURCE=<source> \
   -e PLUGIN_TARGET=<target> \
   -e PLUGIN_BUCKET=<bucket> \
+  -e PLUGIN_CREATEBUCKET="true" \
   -e AWS_ACCESS_KEY_ID=<token> \
   -e AWS_SECRET_ACCESS_KEY=<secret> \
   -v $(pwd):$(pwd) \
