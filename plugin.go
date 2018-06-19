@@ -74,15 +74,35 @@ type Plugin struct {
 	// Dry run without uploading/
 	DryRun bool
 	CreateBucketIfNecessary bool
+
+	AppendBranchtoBucket bool
+
+	GitFlowReady bool
+
+	CommitBranch string
 }
 
 // Exec runs the plugin
 func (p *Plugin) Exec() error {
+	if (p.AppendBranchtoBucket == true){
+		toAppend := []string{"", ""}
+		toAppend[0] = p.Bucket
+		if (p.GitFlowReady == true){
+			toAppend[1] = strings.ToLower(strings.TrimPrefix(p.CommitBranch, "feature/"))
+		} else{
+			toAppend[1] = p.CommitBranch
+		}
+		log.WithFields(log.Fields{
+			"toAppend": toAppend,
+		}).Info("toAppend")
+		p.Bucket = strings.Join(toAppend, "-")
+	}
+		
 	// normalize the target URL
 	if strings.HasPrefix(p.Target, "/") {
 		p.Target = p.Target[1:]
 	}
-
+	
 	// create the client
 	conf := &aws.Config{
 		Region:           aws.String(p.Region),
@@ -90,25 +110,18 @@ func (p *Plugin) Exec() error {
 		DisableSSL:       aws.Bool(strings.HasPrefix(p.Endpoint, "http://")),
 		S3ForcePathStyle: aws.Bool(p.PathStyle),
 	}
-
+	
 	//Allowing to use the instance role or provide a key and secret
 	if p.Key != "" && p.Secret != "" {
 		conf.Credentials = credentials.NewStaticCredentials(p.Key, p.Secret, "")
-	} else if p.YamlVerified != true {
+	}else if p.YamlVerified != true {
 		return errors.New("Security issue: When using instance role you must have the yaml verified")
 	}
 	client := s3.New(session.New(), conf)
-
-	// find the bucket
-	log.WithFields(log.Fields{
-		"region":   p.Region,
-		"endpoint": p.Endpoint,
-		"bucket":   p.Bucket,
-	}).Info("Attempting to upload")
-
+	
 	// Add Creation of Bucket if needed
 	if (p.CreateBucketIfNecessary == true){
-	
+		
 		input := &s3.ListBucketsInput{
 		}
 		result, err := client.ListBuckets(input)
@@ -119,6 +132,7 @@ func (p *Plugin) Exec() error {
 					log.WithFields(log.Fields{
 						"err": aerr.Error(),
 					}).Error("ListBucket")
+					return err
 					
 					//fmt.Println(aerr.Error())
 				}
@@ -129,19 +143,21 @@ func (p *Plugin) Exec() error {
 				log.WithFields(log.Fields{
 					"err": aerr.Error(),
 				}).Error("ListBucket")
+				return err
 			}
 		}
-		log.WithFields(log.Fields{
-			"listBucket": result,
-		}).Info("ListBuckets")
+
+		// log.WithFields(log.Fields{
+		// 	"listBucket": result,
+		// }).Info("ListBuckets")
 		
 		var isBucketExisting bool = false
 		
 		for _, bucket := range result.Buckets {
-			log.WithFields(log.Fields{
-				"BucketName": p.Bucket,
-				"BucketNamefromAWS": aws.StringValue(bucket.Name),
-			}).Info("AWS Check\n")
+			// log.WithFields(log.Fields{
+			// 	"BucketName": p.Bucket,
+			// 	"BucketNamefromAWS": aws.StringValue(bucket.Name),
+			// }).Info("AWS Check\n")
 			if ((aws.StringValue(bucket.Name) == p.Bucket) == true){
 				isBucketExisting = true
 			}
@@ -160,6 +176,7 @@ func (p *Plugin) Exec() error {
 					"BucketName": p.Bucket,
 					"Err": err,
 				}).Error("Unable to create bucket")
+				return err
 			}
 			
 			// Wait until bucket is created before finishing
@@ -175,6 +192,7 @@ func (p *Plugin) Exec() error {
 					"BucketName": p.Bucket,
 					"Err": err,
 				}).Error("Error occurred while waiting for bucket to be created")
+				return err
 			}
 			
 			log.WithFields(log.Fields{
@@ -183,7 +201,6 @@ func (p *Plugin) Exec() error {
 			
 		}
 	}
-
 
         // S3 Config of Bucket
 	result, err := client.GetBucketWebsite(&s3.GetBucketWebsiteInput{

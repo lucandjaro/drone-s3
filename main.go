@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-
 	"github.com/Sirupsen/logrus"
 	"github.com/joho/godotenv"
 	"github.com/urfave/cli"
@@ -92,9 +91,24 @@ func main() {
 			EnvVar: "DRONE_YAML_VERIFIED",
 		},
 		cli.BoolTFlag{
-			Name:   "CreateBucketifNecessary",
+			Name:   "create-bucket-if-necessary",
 			Usage:  "Create bucket if non existing yet",
-			EnvVar: "PLUGIN_CREATEBUCKET",
+			EnvVar: "PLUGIN_CREATE_BUCKET",
+		},
+		cli.BoolTFlag{
+			Name:   "append-branch-to-bucket",
+			Usage:  "Append BranchName to BucketName",
+			EnvVar: "PLUGIN_APPEND_BRANCH",
+		},
+		cli.BoolTFlag{
+			Name:   "gitflow-ready",
+			Usage:  "rm feature/ in BranchName for BucketName if append-branch-name-to-bucket is true",
+			EnvVar: "PLUGIN_GITFLOW_READY",
+		},
+		cli.StringFlag{
+			Name:   "commit-branch",
+			Usage:  "Commit Branch Name",
+			EnvVar: "DRONE_COMMIT_BRANCH",
 		},
 		cli.StringFlag{
 			Name:  "env-file",
@@ -127,7 +141,10 @@ func run(c *cli.Context) error {
 		PathStyle:    c.Bool("path-style"),
 		DryRun:       c.Bool("dry-run"),
 		YamlVerified: c.BoolT("yaml-verified"),
-		CreateBucketIfNecessary: c.Bool("CreateBucketIfNecessary"),
+		CreateBucketIfNecessary: c.Bool("create-bucket-if-necessary"),
+		AppendBranchtoBucket: c.Bool("append-branch-to-bucket"),
+		GitFlowReady: c.Bool("gitflow-ready"),
+		CommitBranch: c.String("commit-branch"),
 	}
 
 	return plugin.Exec()
