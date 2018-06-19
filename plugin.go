@@ -77,9 +77,13 @@ type Plugin struct {
 
 	AppendBranchtoBucket bool
 
-	GitFlowReady bool
+	PrefixDelete string
 
 	CommitBranch string
+
+	S3Hosting bool
+	IndexDocument string
+	ErrorDocument string
 }
 
 // Exec runs the plugin
@@ -87,8 +91,8 @@ func (p *Plugin) Exec() error {
 	if (p.AppendBranchtoBucket == true){
 		toAppend := []string{"", ""}
 		toAppend[0] = p.Bucket
-		if (p.GitFlowReady == true){
-			toAppend[1] = strings.ToLower(strings.TrimPrefix(p.CommitBranch, "feature/"))
+		if (len(p.PrefixDelete) > 0){
+			toAppend[1] = strings.ToLower(strings.TrimPrefix(p.CommitBranch, p.PrefixDelete))
 		} else{
 			toAppend[1] = p.CommitBranch
 		}
@@ -202,46 +206,81 @@ func (p *Plugin) Exec() error {
 		}
 	}
 
-        // S3 Config of Bucket
-	result, err := client.GetBucketWebsite(&s3.GetBucketWebsiteInput{
-		Bucket: aws.String(p.Bucket),
-	})
-	if err != nil {
-		// Check for the NoSuchWebsiteConfiguration error code telling us
-		// that the bucket does not have a website configured.
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NoSuchWebsiteConfiguration" {
-			
-			exitErrorf("Bucket %s does not have website configuration\n", p.Bucket)
+
+	if (p.S3Hosting == true){
+		// S3 Config of Bucket
+		result, err := client.GetBucketWebsite(&s3.GetBucketWebsiteInput{
+			Bucket: aws.String(p.Bucket),
+		})
+		if err != nil {
+			// Check for the NoSuchWebsiteConfiguration error code telling us
+			// that the bucket does not have a website configured.
+			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NoSuchWebsiteConfiguration" {
+				log.WithFields(log.Fields{
+					"BucketName": p.Bucket,
+					"Err": err,
+				}).Error("Bucket does not have website configuration")
+				
+				//exitErrorf("Bucket %s does not have website configuration\n", p.Bucket)
+			}
+			//exitErrorf("Unable to get bucket website config, %v", err)
 		}
-		exitErrorf("Unable to get bucket website config, %v", err)
+		//fmt.Println("Bucket Website Configuration:")
+		//fmt.Println(result)
+		log.WithFields(log.Fields{
+			"BucketConfig": result,
+		}).Info("Bucket Website Configuration")
+		
+		params := s3.PutBucketWebsiteInput{
+			Bucket: aws.String(p.Bucket),
+			WebsiteConfiguration: &s3.WebsiteConfiguration{},
+		}
+		
+		if (len(p.IndexDocument) > 0 ){
+			// params := s3.PutBucketWebsiteInput{
+			// 	WebsiteConfiguration: &s3.WebsiteConfiguration{
+			// 		IndexDocument: &s3.IndexDocument{
+			// 			Suffix: aws.String(p.IndexDocument),
+			// 		},
+			// 	},
+			params.WebsiteConfiguration.IndexDocument = &s3.IndexDocument{
+				Suffix: aws.String(p.IndexDocument),
+			}
+			
+		// Add the error page if set on CLI
+			if (len(p.ErrorDocument) > 0){
+				params.WebsiteConfiguration.ErrorDocument = &s3.ErrorDocument{
+					Key: aws.String(p.ErrorDocument),
+				}  
+			}
+		}
+
+		_, err = client.PutBucketWebsite(&params)
+		if err != nil {
+			
+			//exitErrorf("Unable to set bucket %q website configuration, %v",
+			//	p.Bucket, err)
+			log.WithFields(log.Fields{
+				"BucketName": p.Bucket,
+				"Err": err,
+			}).Error("Unable to set bucket website configuration")
+		}else{
+		
+			log.WithFields(log.Fields{
+				"BucketName": p.Bucket,
+			}).Info("Successfully set bucket website configuration")
+			
+			s := []string{}
+			s = append(s, p.Bucket)
+		s = append(s, ".s3-website.eu-west-3.amazonaws.com")
+			log.WithFields(log.Fields{
+				"S3 URL": strings.Join(s, ""),
+			}).Info("S3 URL is available")
+		}
 	}
-	fmt.Println("Bucket Website Configuration:")
-	fmt.Println(result)
-
-	params := s3.PutBucketWebsiteInput{
-		Bucket: aws.String(p.Bucket),
-		WebsiteConfiguration: &s3.WebsiteConfiguration{
-			IndexDocument: &s3.IndexDocument{
-				Suffix: aws.String("/index.html"),
-			},
-		},
-	}
-
-	// Add the error page if set on CLI
-	if len(errorPage) > 0 {
-		params.WebsiteConfiguration.ErrorDocument = &s3.ErrorDocument{
-			Key: aws.String("/index.html"),
-		}  
-	}
-
-	_, err = svc.PutBucketWebsite(&params)
-	if err != nil {
-		exitErrorf("Unable to set bucket %q website configuration, %v",
-			p.Bucket, err)
-	}
-
-	fmt.Printf("Successfully set bucket %q website configuration\n", p.Bucket)
-
+		
+		
+	//fmt.Printf("Successfully set bucket %q website configuration\n", p.Bucket)
         // END OF S3 Bucket Config
    
 

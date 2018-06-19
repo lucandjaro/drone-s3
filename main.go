@@ -75,12 +75,12 @@ func main() {
 			Usage:  "server-side encryption algorithm, defaults to none",
 			EnvVar: "PLUGIN_ENCRYPTION",
 		},
-		cli.BoolFlag{
+		cli.BoolTFlag{
 			Name:   "dry-run",
 			Usage:  "dry run for debug purposes",
 			EnvVar: "PLUGIN_DRY_RUN",
 		},
-		cli.BoolFlag{
+		cli.BoolTFlag{
 			Name:   "path-style",
 			Usage:  "use path style for bucket paths",
 			EnvVar: "PLUGIN_PATH_STYLE",
@@ -100,15 +100,30 @@ func main() {
 			Usage:  "Append BranchName to BucketName",
 			EnvVar: "PLUGIN_APPEND_BRANCH",
 		},
-		cli.BoolTFlag{
-			Name:   "gitflow-ready",
-			Usage:  "rm feature/ in BranchName for BucketName if append-branch-name-to-bucket is true",
-			EnvVar: "PLUGIN_GITFLOW_READY",
+		cli.StringFlag{
+			Name:   "prefix-delete",
+			Usage:  "rm prefix in BranchName for BucketName if append-branch-name-to-bucket is true",
+			EnvVar: "PLUGIN_PREFIX_RM, BRANCH_PREFIX_RM",
 		},
 		cli.StringFlag{
 			Name:   "commit-branch",
 			Usage:  "Commit Branch Name",
 			EnvVar: "DRONE_COMMIT_BRANCH",
+		},
+		cli.BoolTFlag{
+			Name:   "s3-hosting",
+			Usage:  "Check and Activate S3 Hosting if not",
+			EnvVar: "PLUGIN_HOSTING,S3_HOSTING",
+		},
+		cli.StringFlag{
+			Name:   "index-document",
+			Usage:  "Check and set IndexDocument in S3 Hosting Config",
+			EnvVar: "PLUGIN_INDEX_DOCUMENT,S3_INDEX_DOCUMENT",
+		},
+		cli.StringFlag{
+			Name:   "error-document",
+			Usage:  "Check and set ErrorDocument in S3 Hosting Config",
+			EnvVar: "PLUGIN_ERROR_DOCUMENT,S3_ERROR_DOCUMENT",
 		},
 		cli.StringFlag{
 			Name:  "env-file",
@@ -143,8 +158,11 @@ func run(c *cli.Context) error {
 		YamlVerified: c.BoolT("yaml-verified"),
 		CreateBucketIfNecessary: c.Bool("create-bucket-if-necessary"),
 		AppendBranchtoBucket: c.Bool("append-branch-to-bucket"),
-		GitFlowReady: c.Bool("gitflow-ready"),
+		PrefixDelete: c.String("prefix-delete"),
 		CommitBranch: c.String("commit-branch"),
+		S3Hosting: c.Bool("s3-hosting"),
+		IndexDocument: c.String("index-document"),
+		ErrorDocument: c.String("error-document"),
 	}
 
 	return plugin.Exec()
