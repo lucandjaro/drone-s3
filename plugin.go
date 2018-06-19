@@ -183,6 +183,53 @@ func (p *Plugin) Exec() error {
 			
 		}
 	}
+
+
+        // S3 Config of Bucket
+	result, err := client.GetBucketWebsite(&s3.GetBucketWebsiteInput{
+		Bucket: aws.String(p.Bucket),
+	})
+	if err != nil {
+		// Check for the NoSuchWebsiteConfiguration error code telling us
+		// that the bucket does not have a website configured.
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NoSuchWebsiteConfiguration" {
+			
+			exitErrorf("Bucket %s does not have website configuration\n", p.Bucket)
+		}
+		exitErrorf("Unable to get bucket website config, %v", err)
+	}
+	fmt.Println("Bucket Website Configuration:")
+	fmt.Println(result)
+
+	params := s3.PutBucketWebsiteInput{
+		Bucket: aws.String(p.Bucket),
+		WebsiteConfiguration: &s3.WebsiteConfiguration{
+			IndexDocument: &s3.IndexDocument{
+				Suffix: aws.String("/index.html"),
+			},
+		},
+	}
+
+	// Add the error page if set on CLI
+	if len(errorPage) > 0 {
+		params.WebsiteConfiguration.ErrorDocument = &s3.ErrorDocument{
+			Key: aws.String("/index.html"),
+		}  
+	}
+
+	_, err = svc.PutBucketWebsite(&params)
+	if err != nil {
+		exitErrorf("Unable to set bucket %q website configuration, %v",
+			p.Bucket, err)
+	}
+
+	fmt.Printf("Successfully set bucket %q website configuration\n", p.Bucket)
+
+        // END OF S3 Bucket Config
+   
+
+
+
 	// End of Creation of Bucket	
 	matches, err := matches(p.Source, p.Exclude)
 	if err != nil {
