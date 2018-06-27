@@ -77,7 +77,7 @@ type Plugin struct {
 
 	AppendBranchtoBucket bool
 
-	PrefixDelete string
+	s3PrefixStripBranch string
 
 	CommitBranch string
 
@@ -91,13 +91,14 @@ func (p *Plugin) Exec() error {
 	if (p.AppendBranchtoBucket == true){
 		toAppend := []string{"", ""}
 		toAppend[0] = p.Bucket
-		if (len(p.PrefixDelete) > 0){
-			toAppend[1] = strings.ToLower(strings.TrimPrefix(p.CommitBranch, p.PrefixDelete))
+		if (len(p.s3PrefixStripBranch) > 0){
+			toAppend[1] = strings.ToLower(strings.TrimPrefix(p.CommitBranch, p.s3PrefixStripBranch))
 		} else{
-			toAppend[1] = p.CommitBranch
+			toAppend[1] = strings.ToLower(p.CommitBranch)
 		}
 		log.WithFields(log.Fields{
-			"toAppend": toAppend,
+			"s3PrefixStripBranch": p.s3PrefixStripBranch,
+			"YeeestoAppend": toAppend,
 		}).Info("toAppend")
 		p.Bucket = strings.Join(toAppend, "-")
 	}
