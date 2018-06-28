@@ -327,9 +327,9 @@ func (p *Plugin) Exec() error {
 
 		// when executing a dry-run we exit because we don't actually want to
 		// upload the file to S3.
-		if p.DryRun {
-			continue
-		}
+		//if p.DryRun {
+		//	continue
+		//}
 
 		f, err := os.Open(match)
 		if err != nil {
@@ -354,6 +354,16 @@ func (p *Plugin) Exec() error {
 		}
 
 		_, err = client.PutObject(putObjectInput)
+
+		// log file for debug purposes.
+		log.WithFields(log.Fields{
+			"name":         match,
+			"bucket":       p.Bucket,
+			"target":       target,
+			"content-type": content,
+		}).Info("Uploaded file")
+
+		
 		
 		if err != nil {
 			log.WithFields(log.Fields{
