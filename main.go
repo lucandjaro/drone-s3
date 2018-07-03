@@ -9,7 +9,7 @@ import (
 )
 
 var build = "0" // build number set at compile-time
-
+ 
 func main() {
 	app := cli.NewApp()
 	app.Name = "s3 plugin"
@@ -93,7 +93,7 @@ func main() {
 		cli.BoolTFlag{
 			Name:   "create-bucket-if-necessary",
 			Usage:  "Create bucket if non existing yet",
-			EnvVar: "PLUGIN_CREATE_BUCKET",
+			EnvVar: "PLUGIN_CREATE_BUCKET_IF_NECESSARY",
 		},
 		cli.BoolTFlag{
 			Name:   "append-branch-to-bucket",
@@ -101,9 +101,9 @@ func main() {
 			EnvVar: "PLUGIN_APPEND_BRANCH",
 		},
 		cli.StringFlag{
-			Name:   "prefix-delete",
+			Name:   "prefixstripbranch",
 			Usage:  "rm prefix in BranchName for BucketName if append-branch-name-to-bucket is true",
-			EnvVar: "PLUGIN_PREFIX_RM, BRANCH_PREFIX_RM",
+			EnvVar: "PLUGIN_PREFIXSTRIPBRANCH",
 		},
 		cli.StringFlag{
 			Name:   "commit-branch",
@@ -116,14 +116,14 @@ func main() {
 			EnvVar: "PLUGIN_HOSTING,S3_HOSTING",
 		},
 		cli.StringFlag{
-			Name:   "index-document",
+			Name:   "indexdocument",
 			Usage:  "Check and set IndexDocument in S3 Hosting Config",
-			EnvVar: "PLUGIN_INDEX_DOCUMENT,S3_INDEX_DOCUMENT",
+			EnvVar: "PLUGIN_INDEXDOCUMENT,S3_INDEX_DOCUMENT",
 		},
 		cli.StringFlag{
-			Name:   "error-document",
+			Name:   "errordocument",
 			Usage:  "Check and set ErrorDocument in S3 Hosting Config",
-			EnvVar: "PLUGIN_ERROR_DOCUMENT,S3_ERROR_DOCUMENT",
+			EnvVar: "PLUGIN_ERRORDOCUMENT,S3_ERROR_DOCUMENT",
 		},
 		cli.StringFlag{
 			Name:  "env-file",
@@ -158,11 +158,11 @@ func run(c *cli.Context) error {
 		YamlVerified: c.BoolT("yaml-verified"),
 		CreateBucketIfNecessary: c.Bool("create-bucket-if-necessary"),
 		AppendBranchtoBucket: c.Bool("append-branch-to-bucket"),
-		PrefixDelete: c.String("prefix-delete"),
+		s3PrefixStripBranch: c.String("prefixstripbranch"),
 		CommitBranch: c.String("commit-branch"),
 		S3Hosting: c.Bool("s3-hosting"),
-		IndexDocument: c.String("index-document"),
-		ErrorDocument: c.String("error-document"),
+		IndexDocument: c.String("indexdocument"),
+		ErrorDocument: c.String("errordocument"),
 	}
 
 	return plugin.Exec()

@@ -77,7 +77,7 @@ type Plugin struct {
 
 	AppendBranchtoBucket bool
 
-	PrefixDelete string
+	s3PrefixStripBranch string
 
 	CommitBranch string
 
@@ -91,13 +91,14 @@ func (p *Plugin) Exec() error {
 	if (p.AppendBranchtoBucket == true){
 		toAppend := []string{"", ""}
 		toAppend[0] = p.Bucket
-		if (len(p.PrefixDelete) > 0){
-			toAppend[1] = strings.ToLower(strings.TrimPrefix(p.CommitBranch, p.PrefixDelete))
+		if (len(p.s3PrefixStripBranch) > 0){
+			toAppend[1] = strings.ToLower(strings.TrimPrefix(p.CommitBranch, p.s3PrefixStripBranch))
 		} else{
-			toAppend[1] = p.CommitBranch
+			toAppend[1] = strings.ToLower(p.CommitBranch)
 		}
 		log.WithFields(log.Fields{
-			"toAppend": toAppend,
+			"s3PrefixStripBranch": p.s3PrefixStripBranch,
+			"YeeestoAppend": toAppend,
 		}).Info("toAppend")
 		p.Bucket = strings.Join(toAppend, "-")
 	}
@@ -326,9 +327,9 @@ func (p *Plugin) Exec() error {
 
 		// when executing a dry-run we exit because we don't actually want to
 		// upload the file to S3.
-		if p.DryRun {
-			continue
-		}
+		//if p.DryRun {
+		//	continue
+		//}
 
 		f, err := os.Open(match)
 		if err != nil {
@@ -353,6 +354,16 @@ func (p *Plugin) Exec() error {
 		}
 
 		_, err = client.PutObject(putObjectInput)
+
+		// log file for debug purposes.
+		log.WithFields(log.Fields{
+			"name":         match,
+			"bucket":       p.Bucket,
+			"target":       target,
+			"content-type": content,
+		}).Info("Uploaded file")
+
+		
 		
 		if err != nil {
 			log.WithFields(log.Fields{
