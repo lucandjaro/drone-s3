@@ -96,10 +96,7 @@ func (p *Plugin) Exec() error {
 		} else{
 			toAppend[1] = strings.ToLower(p.CommitBranch)
 		}
-		log.WithFields(log.Fields{
-			"s3PrefixStripBranch": p.s3PrefixStripBranch,
-			"YeeestoAppend": toAppend,
-		}).Info("toAppend")
+
 		p.Bucket = strings.Join(toAppend, "-")
 	}
 
@@ -224,13 +221,9 @@ func (p *Plugin) Exec() error {
 					"BucketName": p.Bucket,
 					"Err": err,
 				}).Error("Bucket does not have website configuration")
-				
-				//exitErrorf("Bucket %s does not have website configuration\n", p.Bucket)
 			}
-			//exitErrorf("Unable to get bucket website config, %v", err)
 		}
-		//fmt.Println("Bucket Website Configuration:")
-		//fmt.Println(result)
+
 		log.WithFields(log.Fields{
 			"BucketConfig": result,
 		}).Info("Bucket Website Configuration")
@@ -241,12 +234,7 @@ func (p *Plugin) Exec() error {
 		}
 		
 		if (len(p.IndexDocument) > 0 ){
-			// params := s3.PutBucketWebsiteInput{
-			// 	WebsiteConfiguration: &s3.WebsiteConfiguration{
-			// 		IndexDocument: &s3.IndexDocument{
-			// 			Suffix: aws.String(p.IndexDocument),
-			// 		},
-			// 	},
+			// Add the index page if set on CLI
 			params.WebsiteConfiguration.IndexDocument = &s3.IndexDocument{
 				Suffix: aws.String(p.IndexDocument),
 			}
@@ -262,8 +250,6 @@ func (p *Plugin) Exec() error {
 		_, err = client.PutBucketWebsite(&params)
 		if err != nil {
 			
-			//exitErrorf("Unable to set bucket %q website configuration, %v",
-			//	p.Bucket, err)
 			log.WithFields(log.Fields{
 				"BucketName": p.Bucket,
 				"Err": err,
@@ -283,12 +269,6 @@ func (p *Plugin) Exec() error {
 		}
 	}
 		
-		
-	//fmt.Printf("Successfully set bucket %q website configuration\n", p.Bucket)
-        // END OF S3 Bucket Config
-   
-
-
 
 	// End of Creation of Bucket	
 	matches, err := matches(p.Source, p.Exclude)
