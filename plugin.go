@@ -102,7 +102,10 @@ func (p *Plugin) Exec() error {
 		}).Info("toAppend")
 		p.Bucket = strings.Join(toAppend, "-")
 	}
-		
+
+	// Replace _ by - because unsupported by aws
+	p.Bucket = strings.Replace(p.Bucket, "_", "-", -1)
+	
 	// normalize the target URL
 	if strings.HasPrefix(p.Target, "/") {
 		p.Target = p.Target[1:]
