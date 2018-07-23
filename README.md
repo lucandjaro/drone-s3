@@ -55,3 +55,42 @@ docker run --rm \
   -w $(pwd) \
   plugins/s3 --dry-run
 ```
+
+**I** have *forked* the ***repository*** to ***add*** some **functionalities** that i *needed*.
+I added this YAML field:
+| Field Name | Type | Usage |
+| ------ | ------ | ------ |
+| `create-bucket-if-necessary` | **bool** | *Create* ***S3 Bucket***, if not *existing*
+| `append-branch-to-bucket` | **bool** | If `create-bucket-if-necessary` is **true**, *append* the **branch name** *triggered* by the ***CI*** in **bucket name**.
+| `prefixstripbranch` | **string** | If `append-branch-to-bucket` is **true**, *remove* **prefix** in ***branch name***.
+| `s3-hosting` | **bool** | *Activate* **S3 Hosting** on ***Bucket***.
+| `indexdocument` | **string** | ***Index Document*** for **S3 Hosting Configuration**
+| `errordocument` | **string** | ***Error Document*** for **S3 Hosting Configuration**
+
+For **React JS** or other ù, do not *forget* to put `index.html` on **error-document**.
+It will *redirect* all ***url*** to **index.html**
+
+```
+pipeline:
+   s3-branch:
+     image: lucandjaro/drone-s3:dev
+     bucket: bucket-in-s3
+     acl: public-read
+     source: dist/*
+     strip_prefix: dist/
+     target: /
+     delete: true
+     region: eu-west-3
+     create-bucket-if-necessary: true
+     append-branch-to-bucket: true
+     ### If you are using gitflow or any prefix like release/
+     prefixstripbranch: "feature/"
+     s3-hosting: true
+     indexdocument: index.html
+     errordocument: index.html
+     secrets: [ AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY ]
+     when:
+      branch: [ feature/* ]
+      event: [ push, pull_request ]
+```
+
