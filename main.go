@@ -96,7 +96,7 @@ func main() {
 			EnvVar: "PLUGIN_CREATE_BUCKET_IF_NECESSARY",
 		},
 		cli.BoolTFlag{
-			Name:   "append-branch-to-bucket",
+			Name:   "append-branch",
 			Usage:  "Append BranchName to BucketName",
 			EnvVar: "PLUGIN_APPEND_BRANCH",
 		},
